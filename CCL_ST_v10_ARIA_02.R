@@ -1,18 +1,16 @@
 ########################################################################
 # Name: CCL_ST_v10_ARIA_02.R
-# Project: low dose ARIA (Akhil's project)
+# Project: mouse low dose ARIA (Akhil's project)
 # Purpose: Analysis of low dose ARIA Xenium Spatial Transcriptomics data
 #         - Part 1: Merging files, attaching metadata and pre-processing 
 #         - Part 2: RCTD and SPLIT
 #         - Part 3: manually annotating all clusters 
 #         - Part 4: subclustering, cleaning and manually annotating microglia 
-#         - Part 5: code for publishable figures 
+#         - Part 5: fixed slide and sample ID misalignment in Kai's microglia object, extracted final seurat objs metadata for squidpy and spatial data analyses, and code for publishable figures 
 # Input Files: rds files from part 1 and single cell reference dataset (Allen Brain Cell Atlas 10xv3)
 # Output Files: RCTD and SPLIT object
-# UPDATE FOR SOURCE CODE:
-#             - change all "SaveSeuratRds" to "qsave" (saves files as qs rather than rds)
 # Date created: 2/20/26
-# Last updated: 2/20/26
+# Last updated: 4/14/26
 # Author: Chloe Lucido
 ########################################################################
 

@@ -8,3 +8,5 @@
 **- Part 3:** manually annotating all clusters   
 **- Part 4:** subclustering, cleaning and manually annotating microglia   
 **- Part 5:** fixed slide and sample ID misalignment in Kai's microglia object, extracted final seurat objs metadata for squidpy and spatial data analyses, and code for publishable figures  
+
+**Packages used**    

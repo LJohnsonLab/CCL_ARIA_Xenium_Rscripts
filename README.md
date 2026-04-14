@@ -18,7 +18,7 @@ R version 4.4.3 (2025-02-28)
 attached base packages:
 [1] stats     graphics  grDevices utils     datasets  methods   base     
 
-other attached packages:
+other attached packages:     
  [1] cowplot_1.2.0         pheatmap_1.0.13       scCustomize_3.2.4     dittoSeq_1.18.0       SCP_0.5.6             speckle_1.6.0         Polychrome_1.5.4     
  [8] RColorBrewer_1.1-3    qs2_0.1.7             SPLIT_0.1.3           sceasy_0.0.7          reticulate_1.45.0     patchwork_1.3.2       readxl_1.4.5         
 [15] lubridate_1.9.5       forcats_1.0.1         stringr_1.6.0         purrr_1.2.1           tidyr_1.3.2           tibble_3.3.1          tidyverse_2.0.0      

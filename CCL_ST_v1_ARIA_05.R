@@ -8,7 +8,7 @@
 #         - Part 4: subclustering, cleaning and manually annotating microglia 
 #         - Part 5: fixed slide and sample ID misalignment in Kai's microglia object, extracted final seurat objs metadata for squidpy and spatial data analyses, and code for publishable figures  
 # Date created : 2/20/26
-# Last updated: 4/14/26
+# Last updated: 4/15/26
 # Author: Chloe Lucido
 ########################################################################
 
@@ -85,6 +85,9 @@ qs_save(microglia, "/Users/cclu223/Desktop/Xenium_ST_Analysis/Aging_Metabolism_R
 
 # read in new microglia obj
 microglia <- qs_read("/Users/cclu223/Desktop/Xenium_ST_Analysis/Aging_Metabolism_Runs/ARIA_Analysis/aria_adu_KAI/20260323_updated_mg_kai.qs2")
+
+# Update microglia obj
+microglia <- UpdateSeuratObject(microglia)
 
 # Extracting metadata from full obj for SpatialData obj ----
 
@@ -527,10 +530,7 @@ imagedim_mg_split_fov2 <- ImageDimPlot(microglia,
 ### rep image dim plot with inset and zoomed in portion ----
 
 
-
-
-
-
+#### all cells imagedimplot ----
 # find spatial coordinates to subset one brain from fov (PLOT DATA)
 data_full <- ggplot_build(
   ImageDimPlot(ann_aria, fov = "fov", dark.background = FALSE)
@@ -539,6 +539,7 @@ data_full <- ggplot_build(
 # extract full x and y range coords 
 full_xrange <- diff(range(data_full$x)) # total width of main plot in data coords 
 full_yrange <- diff(range(data_full$y)) # total height of main plot in data coords 
+
 
 # --- Preview crop region before committing to object ---
 
@@ -624,6 +625,90 @@ p_main_box <- p_main +
     color = "black", fill = NA, linewidth = 0.8
   ) + theme(legend.position = "none")
 
+
+#### microglia subclusters imagedimplot ----
+# using same coordinates as all cells imagedimplot inset 
+
+# Filter to proposed crop region
+mg_xlim_preview <- c(5150, 12000)
+mg_ylim_preview <- c(0, 8000)
+
+# Get the spatial coordinates from the FOV
+mg_coords <- FetchData(microglia, 
+                    vars = c("celltype", "x", "y"),
+                    layer = "fov")
+
+mg_coords_cropped <- mg_coords[
+  mg_coords$x >= mg_xlim_preview[1] & mg_coords$x <= mg_xlim_preview[2] &
+    mg_coords$y >= mg_ylim_preview[1] & mg_coords$y <= mg_ylim_preview[2], 
+]
+
+
+# Quick preview plot before adding new cropped fov to obj
+ggplot(mg_coords_cropped, aes(x = x, y = y, color = celltype)) +
+  geom_point(size = 0.5) +
+  scale_color_manual(values = mg_cluster_palette) +
+  coord_fixed() +   # preserves true aspect ratio
+  labs(title = paste0("Preview: x [", mg_xlim_preview[1], "-", mg_xlim_preview[2], 
+                      "], y [", mg_ylim_preview[1], "-", mg_ylim_preview[2], "]")) +
+  guides(color = guide_legend(override.aes = list(size = 3)))
+
+
+
+# NOTE:
+# ImageDimPlot swaps x and y coordinates relative to GetTissueCoordinates
+# so when I define crop regions I will swap the x and y limits in the GetTissueCoordinates space 
+# EXAMPLE: x_plot = y_tissue, y_plot = x_tissue
+
+# crop to 1 brain (KK4_492 in this case)
+mg_KK4_492_crop <- Crop(microglia[["fov"]], 
+                     x = mg_ylim_preview,    # FLIPPED (per note above)
+                     y = mg_xlim_preview, # FLIPPED (per note above)
+                     coords = "plot")
+
+
+# add cropped fov to obj
+microglia[["mg_KK4_492_fov"]] <- mg_KK4_492_crop
+
+
+# plot cropped brain only 
+mg_p_main <- ImageDimPlot(microglia, 
+                       group.by = "celltype", 
+                       cols = mg_cluster_palette,
+                       dark.background = F, 
+                       fov = "mg_KK4_492_fov", 
+                       size = 2)
+
+
+
+# pick x and y limits for cropped region (based on ImageDimPlot)
+
+mg_xlim_zoom <- c(1500, 3500)
+mg_ylim_zoom <- c(8000, 10000)
+
+# generate x and y ranges from cropped/zoomed region
+mg_zoom_xrange <- diff(mg_xlim_zoom)
+mg_zoom_yrange <- diff(mg_ylim_zoom)
+
+
+
+# generate zoomed in plot with fixed aspect ratio
+mg_p_zoom <- mg_p_main +
+  coord_cartesian(
+    xlim = mg_xlim_zoom,
+    ylim = mg_ylim_zoom
+  ) +
+  theme_void() +   # removes axes for cleaner inset
+  theme(legend.position = "none")
+
+# annotation (box) on main plot 
+mg_p_main_box <- mg_p_main +
+  annotate(
+    "rect",
+    xmin = mg_xlim_zoom[1], xmax = mg_xlim_zoom[2],
+    ymin = mg_ylim_zoom[1], ymax = mg_ylim_zoom[2],
+    color = "black", fill = NA, linewidth = 0.8
+  ) + theme(legend.position = "none")
 
 ## 02e. Neighborhood Enrichment Heatmaps ----
 
@@ -714,8 +799,13 @@ ggsave(filename = "20260311_imagedimplot_mg_clusters_fov1.pdf", plot = imagedim_
 ggsave(filename = "20260311_imagedimplot_mg_clusters_fov2.pdf", plot = imagedim_mg_fov2, path = "/Users/cclu223/Desktop/Xenium_ST_Analysis/Aging_Metabolism_Runs/ARIA_Analysis/Figures", device = "pdf", dpi = 600)
 ggsave(filename = "20260311_imagedimplot_mg_splitclusters_fov1.pdf", plot = imagedim_mg_split_fov1, path = "/Users/cclu223/Desktop/Xenium_ST_Analysis/Aging_Metabolism_Runs/ARIA_Analysis/Figures", device = "pdf", dpi = 600, width = 11, height = 8)
 ggsave(filename = "20260311_imagedimplot_mg_splitclusters_fov2.pdf", plot = imagedim_mg_split_fov2, path = "/Users/cclu223/Desktop/Xenium_ST_Analysis/Aging_Metabolism_Runs/ARIA_Analysis/Figures", device = "pdf", dpi = 600, width = 11, height = 8)
+
 ggsave(filename = "20260413_imagedimplot_KK4_492_box.pdf", plot = p_main_box, path = "/Users/cclu223/Desktop/Xenium_ST_Analysis/Aging_Metabolism_Runs/ARIA_Analysis/Figures", device = "pdf", dpi = 600, width = 11, height = 8)
 ggsave(filename = "20260413_imagedimplot_KK4_492_zoomedregion.pdf", plot = p_zoom, path = "/Users/cclu223/Desktop/Xenium_ST_Analysis/Aging_Metabolism_Runs/ARIA_Analysis/Figures", device = "pdf", dpi = 600, width = 11, height = 8)
+
+ggsave(filename = "20260415_mg_imagedimplot_KK4_492_box.pdf", plot = mg_p_main_box, path = "/Users/cclu223/Desktop/Xenium_ST_Analysis/Aging_Metabolism_Runs/ARIA_Analysis/Figures", device = "pdf", dpi = 600, width = 11, height = 8)
+ggsave(filename = "20260415_mg_imagedimplot_KK4_492_zoomedregion.pdf", plot = mg_p_zoom, path = "/Users/cclu223/Desktop/Xenium_ST_Analysis/Aging_Metabolism_Runs/ARIA_Analysis/Figures", device = "pdf", dpi = 600, width = 11, height = 8)
+
 
 # heatmaps
 ggsave(filename = "nhoodenrich_heatmap.pdf", plot = full_brain_heatmap, path = "/Users/cclu223/Desktop/Xenium_ST_Analysis/Aging_Metabolism_Runs/ARIA_Analysis/Figures", device = "pdf", dpi = 600, width = 11, height = 8)
